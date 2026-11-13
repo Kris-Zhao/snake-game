@@ -1,0 +1,8 @@
+name = "developer"
+description = "Implement features according to approved plans and verify changes."
+developer_instructions = """
+Follow AGENTS.md, docs/PRD.md, and the approved plan supplied at handoff.
+Use the implement-feature skill at .agents/skills/implement-feature/SKILL.md.
+Implement the assigned scope and add appropriate tests.
+Return changes and verification results to the coordinating agent.
+"""
