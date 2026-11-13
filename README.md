@@ -1,38 +1,77 @@
-# Snake
+# Snake Game
 
-A local Python 3.12 / Pygame Snake game with independently testable rules.
+This is a local, single-player desktop Snake game built with Python 3.12 and Pygame. Guide the snake to eat food and score points while avoiding walls and its own body. Game rules are separate from the graphical interface, so the core logic can be tested without opening a window.
 
-From the repository root in PowerShell:
+## Gameplay
+
+- The board is 20 × 20 cells. The snake starts three cells long and moves to the right.
+- The snake moves eight cells per second. Each piece of food increases its length by one cell and adds 10 points.
+- Hitting a wall or the snake's body ends the game. Filling the entire board wins the game.
+- At most one valid turn is accepted before each move. The snake cannot reverse direction directly.
+- Arrow keys have no effect while the game is paused or after it ends.
+
+| Key | Action |
+| --- | --- |
+| Arrow keys ↑ ↓ ← → | Change the snake's direction |
+| Space | Pause or resume the game |
+| R | Restart the game |
+| Esc | Quit the game |
+| Window close button | Quit the game |
+
+## Running the Game
+
+Install **Python 3.12** before running the game. A graphical desktop environment is required, and installing dependencies requires an internet connection to download Pygame.
+
+Run all commands below from the project root (the directory containing `pyproject.toml`). Create a virtual environment and install dependencies before the first run. For subsequent runs, use the launch command directly.
+
+### Windows (PowerShell)
+
+Create a virtual environment and install dependencies:
 
 ```powershell
 py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+.\.venv\Scripts\python.exe -m pip install -e .
+```
+
+Launch the game:
+
+```powershell
 .\.venv\Scripts\python.exe -m snake_game
 ```
 
-On other platforms, create the environment with `python3.12 -m venv .venv`
-and use `.venv/bin/python` for the install and launch commands.
+### macOS / Linux
 
-Use arrow keys to turn, Space to pause/resume, R to restart, and Escape or the
-window close button to exit. The 20×20 board starts with three snake cells
-moving right at eight ticks per second. Each food grows the snake by one cell
-and adds ten points. Walls and body collisions end the game; filling the board
-wins. One valid turn is accepted per tick, direct reversals are ignored, and
-arrows are ignored while paused or after the game ends.
+Create a virtual environment and install dependencies:
 
-Run verification with:
+```bash
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -e .
+```
+
+Launch the game:
+
+```bash
+.venv/bin/python -m snake_game
+```
+
+A game window opens on launch, and the snake starts moving automatically. Use the arrow keys to steer.
+
+## Development and Testing
+
+To run tests, install the development dependencies, which include pytest. On Windows, run:
 
 ```powershell
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 .\.venv\Scripts\python.exe -m pytest tests/unit
 .\.venv\Scripts\python.exe -m pytest
 ```
 
-Core tests need neither Pygame nor a display. Integration tests use scoped SDL
-dummy drivers. A finite graphical smoke run is also available:
+On macOS / Linux, replace `.\.venv\Scripts\python.exe` in the commands above with `.venv/bin/python`.
+
+Core unit tests do not require Pygame or a graphical display. Integration tests use SDL's dummy video and audio drivers within a limited scope. You can also run the following command to open a window and exit automatically after rendering three frames, checking window creation, drawing, and shutdown:
 
 ```powershell
 .\.venv\Scripts\python.exe -c "from snake_game.app import run; run(max_frames=3)"
 ```
 
-The finite run checks window creation, drawing, and shutdown; physical keyboard
-interaction and visual readability still require playing the game in a real window.
+Keyboard controls and visual readability still require manual verification in a real game window.
