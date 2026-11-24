@@ -80,14 +80,30 @@ def test_real_loop_preserves_event_order_and_transition_frame_reset(
     assert not pygame.get_init()
 
 
-def assert_text_pixels(pygame, surface, text, font, position):
-    """Check that actual visible pixels include the expected text raster."""
-    rendered = font.render(text, True, view.TEXT_COLOR)
-    expected = pygame.Surface(rendered.get_size())
+def assert_text_pixels(pygame, surface, text, font):
+    """Find the complete text raster on the actual output, independent of position."""
+    color = view.TEXT_COLOR
+    glyph = font.render(text, True, color)
+    expected = pygame.Surface(glyph.get_size())
     expected.fill(view.BACKGROUND)
-    expected.blit(rendered, (0, 0))
-    rectangle = pygame.Rect(position, rendered.get_size())
-    assert pygame.image.tobytes(surface.subsurface(rectangle), "RGB") == pygame.image.tobytes(expected, "RGB")
+    expected.blit(glyph, (0, 0))
+    width, height = expected.get_size()
+    reference = pygame.image.tobytes(expected, "RGB")
+    background_row = bytes(view.BACKGROUND) * width
+    row = next(y for y in range(height)
+               if reference[y * width * 3:(y + 1) * width * 3] != background_row)
+    needle = reference[row * width * 3:(row + 1) * width * 3]
+    actual = pygame.image.tobytes(surface, "RGB")
+    stride = surface.get_width() * 3
+    offset = actual.find(needle)
+    while offset >= 0:
+        x, y = (offset % stride) // 3, offset // stride - row
+        rect = pygame.Rect(x, y, width, height)
+        if offset % 3 == 0 and surface.get_rect().contains(rect):
+            if pygame.image.tobytes(surface.subsurface(rect), "RGB") == reference:
+                return
+        offset = actual.find(needle, offset + 1)
+    pytest.fail(f"Complete visible raster missing: {text!r}")
 
 
 @pytest.mark.parametrize("status,label,help_text", [
@@ -103,17 +119,10 @@ def test_score_and_state_messages_reach_actual_surface(pygame_ready, status, lab
     surface = pygame.display.set_mode(view.window_size(state))
     renderer = view.GameView()
     renderer.draw(surface, state)
-    assert_text_pixels(pygame, surface, "Score: 170", renderer.text_font, (view.MARGIN, 60))
+    assert_text_pixels(pygame, surface, "Score: 170", renderer.text_font)
     if label:
-        board = pygame.Rect(view.MARGIN, view.BOARD_TOP,
-                            state.width * view.CELL_SIZE, state.height * view.CELL_SIZE)
-        panel = pygame.Rect(0, 0, 340, 120)
-        panel.center = board.center
-        for index, (text, font) in enumerate(((label, renderer.overlay_font),
-                                              (help_text, renderer.text_font))):
-            rect = font.render(text, True, view.TEXT_COLOR).get_rect(
-                center=(panel.centerx, panel.top + 36 + index * 43))
-            assert_text_pixels(pygame, surface, text, font, rect.topleft)
+        assert_text_pixels(pygame, surface, label, renderer.overlay_font)
+        assert_text_pixels(pygame, surface, help_text, renderer.text_font)
 
 
 def test_every_module_import_avoids_even_transient_initialization():

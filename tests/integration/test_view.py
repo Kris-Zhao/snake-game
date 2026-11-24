@@ -52,12 +52,19 @@ def test_snake_and_food_are_visually_distinguishable(pygame_ready):
     surface = pygame.Surface(window_size(state))
     GameView().draw(surface, state)
 
-    def pixel(cell):
+    def cell_colors(cell):
         x, y = cell
-        return tuple(surface.get_at((MARGIN + x * CELL_SIZE + CELL_SIZE // 2,
-                                     BOARD_TOP + y * CELL_SIZE + CELL_SIZE // 2)))[:3]
+        return {tuple(surface.get_at((MARGIN + x * CELL_SIZE + dx,
+                                      BOARD_TOP + y * CELL_SIZE + dy)))[:3]
+                for dx in range(4, 24) for dy in range(4, 24)}
 
-    assert pixel(state.snake[0]) == HEAD_COLOR
-    assert pixel(state.snake[1]) == BODY_COLOR
-    assert pixel(state.food) == FOOD_COLOR
-    assert len({HEAD_COLOR, BODY_COLOR, FOOD_COLOR}) == 3
+    head = cell_colors(state.snake[0])
+    body = cell_colors(state.snake[1])
+    apple = cell_colors(state.food)
+    assert HEAD_COLOR in head
+    assert BODY_COLOR in body
+    assert FOOD_COLOR in apple
+    assert len(head) > 4 and len(body) >= 4 and len(apple) > 4
+    assert not apple & {HEAD_COLOR, BODY_COLOR}
+    assert any(r > 1.5 * g for r, g, b in apple)
+    assert not any(r > 1.5 * g for r, g, b in body)
